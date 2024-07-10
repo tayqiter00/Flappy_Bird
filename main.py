@@ -28,20 +28,23 @@ PIPE_TOP = pygame.transform.rotate(PIPE_BTM, 180)
 pipe_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(pipe_timer, 2000)
 
-def collisions(red_bird, pipes_btm, pipes_top):
+def collisions(red_bird, pipes_btm, pipes_top, base_rect):
     for pipe_rect in pipes_btm:
         if red_bird.colliderect(pipe_rect):
             return False
     for pipe_rect in pipes_top:
         if red_bird.colliderect(pipe_rect):
             return False
+    if red_bird.colliderect(base_rect):
+        return False
     return True
 
 def bird_animation():
     global RED_BIRD_SURF, RED_BIRD_INDEX
 
     RED_BIRD_INDEX += 0.1
-    if RED_BIRD_INDEX >= len(RED_BIRD_FLAPS): RED_BIRD_INDEX = 0
+    if RED_BIRD_INDEX >= len(RED_BIRD_FLAPS):
+        RED_BIRD_INDEX = 0
     RED_BIRD_SURF = RED_BIRD_FLAPS[int(RED_BIRD_INDEX)]
 
 def pipe_move(pipes_btm, pipes_top):
@@ -85,6 +88,7 @@ def main():
     jump = -10
     pipes_btm = []
     pipes_top = []
+    base_rect = BASE.get_rect(topleft=(0, 700))
 
     while run:
         clock.tick(FPS)
@@ -106,20 +110,14 @@ def main():
     
         velocity += gravity
         RED_BIRD_RECT.y += velocity
-        if RED_BIRD_RECT.bottom > 700:
-            RED_BIRD_RECT.bottom = 700
-        elif RED_BIRD_RECT.y < 0:
-            RED_BIRD_RECT.y = 0
+
+        if RED_BIRD_RECT.colliderect(base_rect):
+            run = False
 
         pipes_btm, pipes_top = pipe_move(pipes_btm, pipes_top)
         bird_animation()
         draw_window(RED_BIRD_RECT, pipes_btm, pipes_top)
-        run = collisions(RED_BIRD_RECT, pipes_btm, pipes_top)
+        run = run and collisions(RED_BIRD_RECT, pipes_btm, pipes_top, base_rect)
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
