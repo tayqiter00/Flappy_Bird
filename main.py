@@ -1,6 +1,7 @@
 import pygame
 import os
 from random import randint
+from image import ZERO, ZERO_RECT, ONE, ONE_RECT
 
 pygame.init()
 pygame.font.init()
@@ -29,15 +30,16 @@ PIPE_TOP = pygame.transform.rotate(PIPE_BTM, 180)
 PIPE_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(PIPE_TIMER, 2000)
 
-def collisions(red_bird, pipes_btm, pipes_top, base_rect):
+def collisions(red_bird, pipes_btm, pipes_top, bases):
     for pipe_rect in pipes_btm:
         if red_bird.colliderect(pipe_rect):
             return False
     for pipe_rect in pipes_top:
         if red_bird.colliderect(pipe_rect):
             return False
-    if red_bird.colliderect(base_rect):
-        return False
+    for base_rect in bases:
+        if red_bird.colliderect(base_rect):
+            return False
     return True
 
 def bird_animation():
@@ -48,28 +50,39 @@ def bird_animation():
         red_bird_index = 0
     RED_BIRD_SURF = RED_BIRD_FLAPS[int(red_bird_index)]
 
+def base_move(bases):
+    for base_rect in bases:
+        if base_rect.x < -WIDTH + 2:
+            base_rect.x = WIDTH - 3
+        base_rect.x -= 3
+    return (bases)
+
 def pipe_move(pipes_btm, pipes_top):
     if pipes_btm:
         for pipe_rect in pipes_btm:
-            pipe_rect.x -= 5
+            pipe_rect.x -= 3
         pipes_btm = [pipe for pipe in pipes_btm if pipe.x > -100]
     if pipes_top:
         for pipe_rect in pipes_top:
-            pipe_rect.x -= 5
+            pipe_rect.x -= 3
         pipes_top = [pipe for pipe in pipes_top if pipe.x > -100]
     return pipes_btm, pipes_top
 
-def draw_window(red, pipes_btm, pipes_top):
+def draw_window(red, pipes_btm, pipes_top, bases):
     WIN.blit(BACKGROUND, (0, 0))
 
     for pipe_rect in pipes_btm:
         WIN.blit(PIPE_BTM, pipe_rect)
     for pipe_rect in pipes_top:
         WIN.blit(PIPE_TOP, pipe_rect)
+    for base_rect in bases:
+        WIN.blit(BASE, base_rect)
 
     WIN.blit(RED_BIRD_SURF, (red.x, red.y))
-    WIN.blit(BASE, (0, 700))
-
+    if pipes_btm:
+        if pipes_btm[0].x <= red.x:
+            WIN.blit(ZERO, ZERO_RECT)
+    
     pygame.display.update()
 
 def shifted_pipes(pipes_btm):
@@ -84,13 +97,15 @@ def main():
     clock = pygame.time.Clock()
     run = True
     game_start = False
-
+ 
     velocity = 0
     gravity = 0.5
     jump = -10
     pipes_btm = []
     pipes_top = []
     base_rect = BASE.get_rect(topleft=(0, 700))
+    base_rect2 = BASE.get_rect(topleft=(WIDTH, 700))
+    bases = [base_rect, base_rect2]
 
     while run:
         clock.tick(FPS)
@@ -117,27 +132,28 @@ def main():
                 pipes_top = shifted_pipes(pipes_btm)
 
         if  game_start == False:
-            pipes_top = []
+            pipes_top = [] 
             pipes_btm = []
             red_bird_rect = RED_BIRD_SURF.get_rect(midleft=(32, HEIGHT / 2))
             WIN.blit(BACKGROUND, (0, 0))
-            WIN.blit(BASE, (0, 700))
+            bases = base_move(bases)
+            for base_rect in bases:
+                WIN.blit(BASE, base_rect)
             WIN.blit(START_SCREEN, (0, 0))
             pygame.display.update()
 
         else:
+            bases = base_move(bases)
             velocity += gravity
             red_bird_rect.y += velocity
 
             if red_bird_rect.y < 0:
                 red_bird_rect.y = 0
-            if red_bird_rect.colliderect(base_rect):
-                game_start = False
 
             pipes_btm, pipes_top = pipe_move(pipes_btm, pipes_top)
             bird_animation()
-            draw_window(red_bird_rect, pipes_btm, pipes_top)
-            game_start = collisions(red_bird_rect, pipes_btm, pipes_top, base_rect)
+            draw_window(red_bird_rect, pipes_btm, pipes_top, bases)
+            game_start = collisions(red_bird_rect, pipes_btm, pipes_top, bases)
 
 if __name__ == "__main__":
     main()
