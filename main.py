@@ -18,15 +18,15 @@ RED_BIRD_DOWNFLAP = pygame.transform.scale(pygame.image.load(os.path.join('asset
 RED_BIRD_MIDFLAP = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'sprites', 'redbird-midflap.png')), (WIDTH / 7, HEIGHT / 15))
 RED_BIRD_UPFLAP = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'sprites', 'redbird-upflap.png')), (WIDTH / 7, HEIGHT / 15))
 RED_BIRD_FLAPS = [RED_BIRD_DOWNFLAP, RED_BIRD_MIDFLAP, RED_BIRD_UPFLAP]
-RED_BIRD_INDEX = 0
-RED_BIRD_SURF = RED_BIRD_FLAPS[RED_BIRD_INDEX]
-RED_BIRD_RECT = RED_BIRD_SURF.get_rect(midleft=(32, HEIGHT / 2))
+red_bird_index = 0
+RED_BIRD_SURF = RED_BIRD_FLAPS[red_bird_index]
+red_bird_rect = RED_BIRD_SURF.get_rect(midleft=(32, HEIGHT / 2))
 
 PIPE_BTM = pygame.transform.scale(pygame.image.load(os.path.join('assets', 'sprites', 'pipe-red.png')), (WIDTH / 6, HEIGHT / 1.5))
 PIPE_TOP = pygame.transform.rotate(PIPE_BTM, 180)
 
-pipe_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(pipe_timer, 2000)
+PIPE_TIMER = pygame.USEREVENT + 1
+pygame.time.set_timer(PIPE_TIMER, 2000)
 
 def collisions(red_bird, pipes_btm, pipes_top, base_rect):
     for pipe_rect in pipes_btm:
@@ -40,12 +40,12 @@ def collisions(red_bird, pipes_btm, pipes_top, base_rect):
     return True
 
 def bird_animation():
-    global RED_BIRD_SURF, RED_BIRD_INDEX
+    global RED_BIRD_SURF, red_bird_index
 
-    RED_BIRD_INDEX += 0.1
-    if RED_BIRD_INDEX >= len(RED_BIRD_FLAPS):
-        RED_BIRD_INDEX = 0
-    RED_BIRD_SURF = RED_BIRD_FLAPS[int(RED_BIRD_INDEX)]
+    red_bird_index += 0.1
+    if red_bird_index >= len(RED_BIRD_FLAPS):
+        red_bird_index = 0
+    RED_BIRD_SURF = RED_BIRD_FLAPS[int(red_bird_index)]
 
 def pipe_move(pipes_btm, pipes_top):
     if pipes_btm:
@@ -82,6 +82,7 @@ def shifted_pipes(pipes_btm):
 def main():
     clock = pygame.time.Clock()
     run = True
+    game_start = True
 
     velocity = 0
     gravity = 0.5
@@ -101,23 +102,29 @@ def main():
                 if event.key == pygame.K_q:
                     run = False
                     pygame.quit()
+            
                 if event.key == pygame.K_SPACE:
                     velocity = jump
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                velocity = jump
             
-            if event.type == pipe_timer:
+            if event.type == PIPE_TIMER:
                 pipes_btm.append(PIPE_BTM.get_rect(topleft=(432, randint(350, 450))))
                 pipes_top = shifted_pipes(pipes_btm)
     
         velocity += gravity
-        RED_BIRD_RECT.y += velocity
+        red_bird_rect.y += velocity
 
-        if RED_BIRD_RECT.colliderect(base_rect):
+        if red_bird_rect.y < 0:
+            red_bird_rect.y = 0
+        if red_bird_rect.colliderect(base_rect):
             run = False
 
         pipes_btm, pipes_top = pipe_move(pipes_btm, pipes_top)
         bird_animation()
-        draw_window(RED_BIRD_RECT, pipes_btm, pipes_top)
-        run = run and collisions(RED_BIRD_RECT, pipes_btm, pipes_top, base_rect)
+        draw_window(red_bird_rect, pipes_btm, pipes_top)
+        run = collisions(red_bird_rect, pipes_btm, pipes_top, base_rect)
 
 if __name__ == "__main__":
     main()
