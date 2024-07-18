@@ -1,7 +1,6 @@
 import pygame
 import os
 from random import randint
-from image import ZERO, ZERO_RECT, ONE, ONE_RECT
 
 pygame.init()
 pygame.font.init()
